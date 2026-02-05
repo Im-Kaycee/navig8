@@ -181,11 +181,15 @@ class RouteStepSubmission(models.Model):
     WALK = "walk"
     CAB = "cab"
     BUS = "bus"
+    KEKE = "keke"
+    BIKE = "bike"
 
     MODE_CHOICES = [
         (WALK, "Walk"),
         (CAB, "Cab"),
         (BUS, "Bus"),
+        (KEKE, "Keke"),
+        (BIKE, "Bike"),
     ]
 
     route_submission = models.ForeignKey(
@@ -243,11 +247,15 @@ class RouteStep(models.Model):
     WALK = "walk"
     CAB = "cab"
     BUS = "bus"
+    KEKE = "keke"
+    BIKE = "bike"
 
     MODE_CHOICES = [
         (WALK, "Walk"),
         (CAB, "Cab"),
         (BUS, "Bus"),
+        (KEKE, "Keke"),
+        (BIKE, "Bike"),
     ]
 
     route = models.ForeignKey(
