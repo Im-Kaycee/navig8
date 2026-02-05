@@ -31,5 +31,6 @@ urlpatterns = [
     path("search/destinations/<int:destination_id>/starting-places/",StartingPlaceSearchView.as_view(),name="search-starting-places"),
     path("routes/lookup/",RouteLookupView.as_view(),name="route-lookup"),
     path("submissions/submit-route", SubmitRouteView.as_view(), name="submit-route"),
+    path("submissions/<int:pk>/edit", EditSubmissionView.as_view(), name="edit-submission"),
 
 ]

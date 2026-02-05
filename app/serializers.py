@@ -92,6 +92,7 @@ class RouteSubmissionSerializer(serializers.ModelSerializer):
             "submitted_by",
             "destination",
             "starting_point",
+            "starting_point_text",
             "city",
             "status",
             "admin_notes",
@@ -190,3 +191,29 @@ class RouteSubmissionCreateSerializer(serializers.ModelSerializer):
             submission.save(update_fields=["starting_point_text"])
         return submission
 
+class SubmissionEditSerializer(serializers.ModelSerializer):
+    steps = RouteStepSubmissionCreateSerializer(many=True)
+
+    class Meta:
+        model = RouteSubmission
+        fields = [
+            "id",
+            "destination",
+            "starting_point",
+            "starting_point_text",
+            "city",
+            "steps",
+        ]
+        read_only_fields = ["id"]
+
+    def update(self, instance, validated_data):
+        steps_data = validated_data.pop("steps", [])
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # delete old steps and create new ones
+        instance.steps.all().delete()
+        objs = [RouteStepSubmission(route_submission=instance, **step) for step in steps_data]
+        RouteStepSubmission.objects.bulk_create(objs)
+        return instance

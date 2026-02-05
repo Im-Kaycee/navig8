@@ -34,6 +34,9 @@ class IsStaffOrReadOnly(permissions.BasePermission):
         if view.action in ("approve", "reject"):
             return request.user and request.user.is_staff
         return True
+class IsAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_staff)
 
 class RouteSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -194,3 +197,10 @@ class SubmitRouteView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     def perform_create(self, serializer):
         serializer.save(submitted_by=self.request.user if self.request.user.is_authenticated else None)
+       
+class EditSubmissionView(generics.RetrieveUpdateAPIView):
+    queryset = RouteSubmission.objects.all()
+    serializer_class = SubmissionEditSerializer
+    permission_classes = [IsAdmin]
+    
+    
