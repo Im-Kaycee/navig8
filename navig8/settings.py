@@ -125,7 +125,8 @@ SPECTACULAR_SETTINGS = {
 #RESEND_SMTP_USERNAME = 'resend'
 #RESEND_SMTP_HOST = 'smtp.resend.com'
 #DEFAULT_FROM_EMAIL = "WAKA <no-reply@wakaapp.online>"
-#RESEND_API_KEY = env('RESEND_API_KEY')
+RESEND_API_KEY = env('RESEND_API_KEY')
+DEFAULT_FROM_EMAIL = "WAKA <no-reply@wakaapp.online>"
 if ENVIRONMENT == 'production':
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = 'smtp.resend.com'

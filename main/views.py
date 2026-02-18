@@ -49,7 +49,7 @@ from django.contrib.auth.password_validation import validate_password
 User = get_user_model()
 
 
-class PasswordResetRequestView(APIView):
+'''class PasswordResetRequestView(APIView):
     """
     Request a password reset email.
     POST /api/v1/auth/password/reset/
@@ -124,6 +124,68 @@ Waka Team
             pass
         
         # Always return success response to prevent email enumeration
+        return Response(
+            {"detail": "If an account exists with this email, you will receive a password reset link."},
+            status=status.HTTP_200_OK
+        )'''
+import resend
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        
+        if not email:
+            return Response(
+                {"email": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if '@' not in email or '.' not in email:
+            return Response(
+                {"email": ["Enter a valid email address."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'https://app.wakaapp.online')
+            reset_url = f"{frontend_url}/reset-password?uid={uid}&token={token}"
+            
+            subject = 'Password Reset Request - Waka'
+            message = f"""Hello {user.username},
+
+You requested to reset your password for your Waka account.
+
+Click the link below to reset your password:
+{reset_url}
+
+This link will expire in 24 hours.
+
+If you didn't request this password reset, please ignore this email.
+
+Best regards,
+Waka Team
+"""
+            try:
+                resend.api_key = settings.RESEND_API_KEY
+                resend.Emails.send({
+                    "from": settings.DEFAULT_FROM_EMAIL,
+                    "to": [user.email],
+                    "subject": subject,
+                    "text": message,
+                })
+            except Exception as e:
+                print(f"Email send error: {e}")
+                
+        except User.DoesNotExist:
+            pass
+        
         return Response(
             {"detail": "If an account exists with this email, you will receive a password reset link."},
             status=status.HTTP_200_OK
