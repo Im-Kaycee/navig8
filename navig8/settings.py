@@ -106,8 +106,7 @@ TEMPLATES = [
         },
     },
 ]
-FRONTEND_URL = 'http://localhost:8080'  # Change to production URL when deploying
-
+FRONTEND_URL = 'https://app.wakaapp.online'
 # Password reset token expiration time (in seconds)
 # Default: 24 hours
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24
