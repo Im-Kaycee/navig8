@@ -89,10 +89,10 @@ class PasswordResetRequestView(APIView):
             reset_url = f"{frontend_url}/reset-password?uid={uid}&token={token}"
             
             # Email content
-            subject = 'Password Reset Request - Route Finder'
+            subject = 'Password Reset Request - Waka'
             message = f"""Hello {user.username},
 
-You requested to reset your password for your Route Finder account.
+You requested to reset your password for your Waka account.
 
 Click the link below to reset your password:
 {reset_url}
@@ -102,7 +102,7 @@ This link will expire in 24 hours.
 If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
 
 Best regards,
-Route Finder Team
+Waka Team
 """
             
             # Send email
