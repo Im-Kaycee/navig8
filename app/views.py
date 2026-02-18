@@ -47,57 +47,58 @@ class RouteSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = RouteSubmission.objects.all().order_by("-created_at")
     serializer_class = RouteSubmissionSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [IsStaffOrReadOnly]
     throttle_classes = [UserRateThrottle]
 
     @decorators.action(detail=True, methods=["post"], url_path="approve")
     def approve(self, request, pk=None):
-        # fetch & lock candidate row early
-        submission = get_object_or_404(RouteSubmission.objects.select_for_update(), pk=pk)
-        if submission.status != RouteSubmission.SUBMITTED:
-            return Response({"detail": "Submission not in submitted state"}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            # fetch & lock candidate row early
+            submission = get_object_or_404(RouteSubmission.objects.select_for_update(), pk=pk)
+            if submission.status != RouteSubmission.SUBMITTED:
+                return Response({"detail": "Submission not in submitted state"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ApproveSubmissionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated = serializer.validated_data
+            serializer = ApproveSubmissionSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            validated = serializer.validated_data
 
-        place = None
+            place = None
 
-        # 1) explicit place_id chosen by admin
-        place_id = validated.get("place_id")
-        if place_id:
-            place = get_object_or_404(Place, pk=place_id)
-            if place.city_id != submission.city_id:
-                return Response({"detail": "Place city does not match submission city"}, status=status.HTTP_400_BAD_REQUEST)
+            # 1) explicit place_id chosen by admin
+            place_id = validated.get("place_id")
+            if place_id:
+                place = get_object_or_404(Place, pk=place_id)
+                if place.city_id != submission.city_id:
+                    return Response({"detail": "Place city does not match submission city"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2) create_place requested by admin
-        elif validated.get("create_place"):
-            cp = validated["create_place"]
-            canonical = (cp.get("canonical_name") or submission.destination).strip()
-            area = cp.get("area", "")
-            place = Place.objects.filter(city=submission.city, canonical_name__iexact=canonical).first()
-            if not place:
-                place = Place.objects.create(city=submission.city, canonical_name=canonical, area=area)
-
-        # 3) try auto-match by canonical_name or alias
-        else:
-            # try canonical name
-            place = Place.objects.filter(city=submission.city, canonical_name__iexact=submission.destination.strip()).first()
-            if not place:
-                alias = PlaceAlias.objects.filter(place__city=submission.city, name__iexact=submission.destination.strip()).select_related("place").first()
-                if alias:
-                    place = alias.place
-
-            # 4) if still not found -> auto-create using submission.destination
-            if not place:
-                canonical = submission.destination.strip()
-                # double-check to avoid race/duplicates (case-insensitive)
+            # 2) create_place requested by admin
+            elif validated.get("create_place"):
+                cp = validated["create_place"]
+                canonical = (cp.get("canonical_name") or submission.destination).strip()
+                area = cp.get("area", "")
                 place = Place.objects.filter(city=submission.city, canonical_name__iexact=canonical).first()
                 if not place:
-                    place = Place.objects.create(city=submission.city, canonical_name=canonical)
+                    place = Place.objects.create(city=submission.city, canonical_name=canonical, area=area)
 
-        # At this point we have a Place; approve inside a transaction with re-lock
-        with transaction.atomic():
+            # 3) try auto-match by canonical_name or alias
+            else:
+                # try canonical name
+                place = Place.objects.filter(city=submission.city, canonical_name__iexact=submission.destination.strip()).first()
+                if not place:
+                    alias = PlaceAlias.objects.filter(place__city=submission.city, name__iexact=submission.destination.strip()).select_related("place").first()
+                    if alias:
+                        place = alias.place
+
+                # 4) if still not found -> auto-create using submission.destination
+                if not place:
+                    canonical = submission.destination.strip()
+                    # double-check to avoid race/duplicates (case-insensitive)
+                    place = Place.objects.filter(city=submission.city, canonical_name__iexact=canonical).first()
+                    if not place:
+                        place = Place.objects.create(city=submission.city, canonical_name=canonical)
+
+            # At this point we have a Place; approve inside a transaction with re-lock
+            
             submission = RouteSubmission.objects.select_for_update().get(pk=submission.pk)
             if submission.status != RouteSubmission.SUBMITTED:
                 return Response({"detail": "Submission not in submitted state"}, status=status.HTTP_400_BAD_REQUEST)
@@ -107,15 +108,15 @@ class RouteSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @decorators.action(detail=True, methods=["post"], url_path="reject")
     def reject(self, request, pk=None):
-        submission = get_object_or_404(RouteSubmission.objects.select_for_update(), pk=pk)
-        if submission.status != RouteSubmission.SUBMITTED:
-            return Response({"detail": "Submission not in submitted state"}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = RejectSubmissionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        notes = serializer.validated_data.get("admin_notes", "")
-
         with transaction.atomic():
+            submission = get_object_or_404(RouteSubmission.objects.select_for_update(), pk=pk)
+            if submission.status != RouteSubmission.SUBMITTED:
+                return Response({"detail": "Submission not in submitted state"}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = RejectSubmissionSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            notes = serializer.validated_data.get("admin_notes", "")
+
             submission = RouteSubmission.objects.select_for_update().get(pk=submission.pk)
             if submission.status != RouteSubmission.SUBMITTED:
                 return Response({"detail": "Submission not in submitted state"}, status=status.HTTP_400_BAD_REQUEST)

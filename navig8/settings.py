@@ -26,11 +26,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-'''if ENVIRONMENT == 'development':
+if ENVIRONMENT == 'development':
     DEBUG = True
 else:
-    DEBUG = False'''
-DEBUG = True
+    DEBUG = False
+
 ALLOWED_HOSTS = [
     "api.wakaapp.online",
     "app.wakaapp.online",
