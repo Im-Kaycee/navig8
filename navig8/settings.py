@@ -31,9 +31,27 @@ if ENVIRONMENT == 'development':
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = ['*']
-CORS_ALLOW_ALL_ORIGINS = True
+ALLOWED_HOSTS = [
+    "api.wakaapp.online",
+    "app.wakaapp.online",
+    "wakaapp.online",
+]
 
+CORS_ALLOWED_ORIGINS = [
+    "https://api.wakaapp.online",
+    "https://app.wakaapp.online",
+    "https://wakaapp.online",
+]
+# Make sure to include credentials
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True 
+# Also add CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = [
+    "https://api.wakaapp.online",
+    "https://app.wakaapp.online",
+    "https://wakaapp.online",
+   
+]
 CORS_ALLOW_METHODS = [
     "GET",
     "POST",
@@ -101,7 +119,13 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     # OTHER SETTINGS
 }
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+#EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+RESEND_SMTP_PORT = 587
+RESEND_SMTP_USERNAME = 'resend'
+RESEND_SMTP_HOST = 'smtp.resend.com'
+DEFAULT_FROM_EMAIL = "WAKA <no-reply@wakaapp.online>"
+RESEND_API_KEY = env('RESEND_API_KEY')
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
