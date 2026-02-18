@@ -120,12 +120,22 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 #EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-RESEND_SMTP_PORT = 587
-RESEND_SMTP_USERNAME = 'resend'
-RESEND_SMTP_HOST = 'smtp.resend.com'
-DEFAULT_FROM_EMAIL = "WAKA <no-reply@wakaapp.online>"
-RESEND_API_KEY = env('RESEND_API_KEY')
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#RESEND_SMTP_PORT = 587
+#RESEND_SMTP_USERNAME = 'resend'
+#RESEND_SMTP_HOST = 'smtp.resend.com'
+#DEFAULT_FROM_EMAIL = "WAKA <no-reply@wakaapp.online>"
+#RESEND_API_KEY = env('RESEND_API_KEY')
+if ENVIRONMENT == 'production':
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.resend.com'
+    EMAIL_PORT = 456
+    EMAIL_HOST_USER = 'resend'
+    EMAIL_USE_SSL = True
+    EMAIL_HOST_PASSWORD = env('RESEND_API_KEY')
+    DEFAULT_FROM_EMAIL = "WAKA <no-reply@wakaapp.online>"
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
