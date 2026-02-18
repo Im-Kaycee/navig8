@@ -47,7 +47,7 @@ class RouteSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = RouteSubmission.objects.all().order_by("-created_at")
     serializer_class = RouteSubmissionSerializer
-    permission_classes = [IsStaffOrReadOnly]
+    permission_classes = [IsAdmin]
     throttle_classes = [UserRateThrottle]
 
     @decorators.action(detail=True, methods=["post"], url_path="approve")
